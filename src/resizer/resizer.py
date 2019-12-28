@@ -5,7 +5,9 @@ import subprocess
 from utils import utils
 from PIL import Image
 
-def resize(file, old_move, nwidth, nheight):
+FNULL = open(os.devnull, 'w')
+
+def resize(file, old_move, use_waifu, nwidth, nheight):
 	images = None
 	if os.path.isfile(file):
 		images = [utils.get_image(file)]
@@ -18,8 +20,12 @@ def resize(file, old_move, nwidth, nheight):
 	for image in images:
 		output_path = os.path.join(os.path.dirname(file), 'rescaled_' + str(nwidth) + "-" + str(nheight))
 		image = utils.get_image(os.path.join(file, image))
+		original_img_path = image
 		old_dir = os.path.join(os.path.dirname(image), "before-rescale/")
+		waifu_dir = os.path.join(os.path.dirname(image), "waifu/")
+
 		os.makedirs(output_path, exist_ok=True)
+		os.makedirs(waifu_dir, exist_ok=True)
 
 		if old_move:
 			os.makedirs(old_dir, exist_ok=True)
@@ -27,7 +33,7 @@ def resize(file, old_move, nwidth, nheight):
 		image_path = os.path.join(output_path, os.path.basename(image))
 
 		if os.path.isfile(image_path):
-			print("File " + image_path + " already exists. Skipping...")
+			#print("File " + image_path + " already exists. Skipping...")
 			continue
 
 		try:
@@ -38,10 +44,25 @@ def resize(file, old_move, nwidth, nheight):
 			sys.exit(1)
 
 		if (width < nwidth) or (height < nheight):
-			print("Image " + image + " is smaller then specified dimensions. Skipping...")
-			continue
+			if not use_waifu:
+				print("Image " + image + " is smaller then specified dimensions. Skipping...")
+				continue
+			else:
+				print("Upscaling image " + image + " using waifu2x...")
+				while (width < nwidth) or (height < nheight):
+					waifu_image = os.path.join(waifu_dir, os.path.basename(image))
+					subprocess.run(['waifu2x-converter-cpp', '-m', 'noise-scale', '--noise-level', '1', '-i', image, '-o', waifu_image], 
+						stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+					image = waifu_image
+					try:
+						with Image.open(image) as img:
+							width, height = img.size
+					except:
+						print("Could not get image info for ", image)
+						sys.exit(1)
+
 		elif (width == nwidth) or (height == nheight):
-			print("Image " + image + " has the same dimensions as specified. Skipping...")
+			#print("Image " + image + " has the same dimensions as specified. Skipping...")
 			continue	
 
 		ratio = min(width/nwidth, height/nheight)
@@ -65,4 +86,4 @@ def resize(file, old_move, nwidth, nheight):
 			sys.exit(1)
 		
 		if old_move:
-			subprocess.run(["mv", image, old_dir])
+			subprocess.run(["mv", original_img_path, old_dir])

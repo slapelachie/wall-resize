@@ -3,6 +3,10 @@ import sys
 
 from resizer import resizer
 
+#TODO: Add proper logging
+#TODO: Comment everything
+#TODO: Allow for custom sizes in arguments
+
 def get_args():
 	arg = argparse.ArgumentParser(description="Resize pictures")
 
@@ -11,6 +15,9 @@ def get_args():
 
 	arg.add_argument('-m', action="store_true",
 		help="Move old files once scaled")
+
+	arg.add_argument('-w', action="store_true",
+		help="Use waifu scaling on smaller images (This process takes a long time)")
 
 	return arg
 
@@ -22,7 +29,7 @@ def parse_args(parser):
 		sys.exit(1)
 
 	if args.i:
-		resizer.resize(args.i, args.m, 1920, 1080)
+		resizer.resize(args.i, args.m, args.w, 1920, 1080)
 		pass
 
 def main():
