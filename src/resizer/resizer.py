@@ -12,7 +12,7 @@ tqdm_log = logger.setup_logger(__name__+'.tqdm', logging.WARNING, logger.tqdmLog
 
 FNULL = open(os.devnull, 'w')
 
-def resize(file, old_move, use_waifu, verbose, dimensions):
+def resize(file, output_arg, old_move, use_waifu, verbose, dimensions):
 
 	if verbose:
 		log.setLevel(logging.INFO)
@@ -29,9 +29,18 @@ def resize(file, old_move, use_waifu, verbose, dimensions):
 		log.critical("%s is not a file! Exiting...", file)
 		sys.exit(1)
 	
-	output_path = os.path.join(os.path.dirname(file), 'rescaled_' + str(nwidth) + "-" + str(nheight))
-	old_dir = os.path.join(os.path.dirname(file), "before-rescale/")
-	waifu_dir = os.path.join(os.path.dirname(file), "waifu/")
+	output_dir = os.path.abspath(os.path.dirname(file))
+
+	if output_arg:
+		if(os.path.isdir(output_arg)):
+			output_dir = os.path.abspath(output_arg)
+		else:
+			log.error("Specified output directory %s is not a path, using image path %s instead...",
+				output_arg, output_dir)
+		
+	output_path = os.path.join(output_dir, 'rescaled_' + str(nwidth) + "-" + str(nheight))
+	old_dir = os.path.join(output_dir, "before-rescale/")
+	waifu_dir = os.path.join(output_dir, "waifu/")
 
 	log.debug("Attempting to create directory %s", output_path)
 	os.makedirs(output_path, exist_ok=True)

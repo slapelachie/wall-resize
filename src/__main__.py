@@ -6,7 +6,6 @@ import re
 from resizer import resizer
 from utils import logger
 
-#TODO: Add proper logging
 #TODO: Comment everything
 #TODO: Add output file/dir
 #TODO: Add documentation
@@ -22,8 +21,11 @@ def get_args():
 	arg.add_argument('-i', metavar='/path/to/file',
 		help="Input file")
 
+	arg.add_argument('-o', metavar="/path/to/file",
+		help='Output directory')
+
 	arg.add_argument('-d', metavar='WIDTHxHEIGHT',
-		help="Dimensions of rescaled image. Default: 1920x1080")
+		help="Dimensions of rescaled image. Default: 1920x1080")	
 
 	arg.add_argument('-v', action="store_true",
 		help="Verbose logging")
@@ -55,7 +57,7 @@ def parse_args(parser):
 		DIMENSIONS = (int(width), int(height))
 
 	if args.i:
-		resizer.resize(args.i, args.m, args.w, args.v, DIMENSIONS)
+		resizer.resize(args.i, args.o, args.m, args.w, args.v, DIMENSIONS)
 	else:
 		log.warning("Argument -i needs to be specified.")
 		parser.print_help()
