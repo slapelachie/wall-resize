@@ -1,4 +1,9 @@
 import os
+import logging
+
+from utils import logger
+
+log = logger.setup_logger(__name__, logging.WARNING, logger.defaultLoggingHandler())
 
 def get_image(image):
 	"""
@@ -8,7 +13,10 @@ def get_image(image):
 		image (str) -- location of the file
 	"""
 	if os.path.isfile(image): 
+		log.debug("Found image %s", image)
 		return os.path.abspath(image)
+	else:
+		log.critical("Unable to find image %s, exiting...", image)
 
 def get_dir_imgs(img_dir):
 	"""
@@ -19,4 +27,4 @@ def get_dir_imgs(img_dir):
 	"""
 	file_types = ("png", "jpg", "jpeg")
 	return [img.name for img in os.scandir(img_dir)
-			if img.name.lower().endswith(file_types)]
+		if img.name.lower().endswith(file_types)]

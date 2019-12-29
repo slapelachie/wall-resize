@@ -1,5 +1,7 @@
 from . import utils
+from . import logger
 
 ALL = [
-	"utils"
+	"utils",
+	"logger"
 ]
