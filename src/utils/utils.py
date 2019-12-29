@@ -3,6 +3,7 @@ import logging
 
 from utils import logger
 
+# Setup the logger
 log = logger.setup_logger(__name__, logging.WARNING, logger.defaultLoggingHandler())
 
 def get_image(image):
