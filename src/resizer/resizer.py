@@ -40,13 +40,14 @@ def resize(file, output_arg, old_move, use_waifu, verbose, dimensions):
 	# Check if the file is a file or a dir
 	if os.path.isfile(file):
 		images = [utils.get_image(file)]
+		output_dir = os.path.abspath(os.path.dirname(file))
 	elif os.path.isdir(file):
 		images = utils.get_dir_imgs(file)
+		output_dir = os.path.abspath(file)
 	else:
 		log.critical("%s is not a file! Exiting...", file)
 		sys.exit(1)
 	
-	output_dir = os.path.abspath(os.path.dirname(file))
 
 	# If the output argument has been passed, set it to that
 	if output_arg:
@@ -122,9 +123,9 @@ def resize(file, output_arg, old_move, use_waifu, verbose, dimensions):
 						sys.exit(1)
 
 		# Check if the image width is the same as the passed width
-		# Applies to height as well
-		elif (width == nwidth) or (height == nheight):
-			tqdm_log.info("Image %s has the same dimensions as specified. Skipping...")
+		# Applies to height as well	
+		elif (width == nwidth) and (height == nheight):
+			tqdm_log.info("Image %s has the same dimensions as specified. Skipping...", image)
 			continue	
 
 		# Gets the resize size while keeping the aspect ratio the same
@@ -142,6 +143,7 @@ def resize(file, output_arg, old_move, use_waifu, verbose, dimensions):
 
 		try:
 			with Image.open(image) as img:
+				tqdm_log.info("Descaling image %s", image)
 				# Resizes the image keeping the aspect ratio
 				img = img.resize((rwidth, rheight), Image.LANCZOS)
 				# Crop the image to match the dimensions passed
