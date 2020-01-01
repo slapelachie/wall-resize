@@ -52,4 +52,4 @@ wall-resize -wm -d 640x480 -i ~/wallpapers/ -o ~/scaled_wallpapers/
 ```
 
 ## License
-TBA
+Using the [GNU GPL](LICENSE) license
