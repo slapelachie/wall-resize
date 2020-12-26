@@ -14,8 +14,11 @@ This script used the program waifu2x found at this [GitHub repo](https://github.
 Idk what modules are installed by default, I'll get to this one day
 
 ### Installing
-Run the `create_binary.sh` file while in the directory where this README is.
-Move the `wall-resize` binary to a place where it can be executed. For example the `/usr/local/bin/` directory.
+```
+$ git clone https://github.com/slapelachie/wall-resize
+$ cd wall-resize
+$ pip install .
+```
 
 ### 
 
