@@ -45,7 +45,6 @@ def parse_args(parser):
 
     dimensions = (1920, 1080)
 
-    # If the amount of parsed arguments are less then 1, print the help
     if len(sys.argv) <= 1:
         parser.print_help()
         sys.exit(1)
@@ -63,7 +62,7 @@ def parse_args(parser):
             verbose_logging=args.v,
             progress=args.progress,
         )
-        resizer_engine.resize_image()
+        resizer_engine.resize_images()
     else:
         log.warning("Argument -i needs to be specified.")
         parser.print_help()

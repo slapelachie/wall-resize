@@ -41,14 +41,6 @@ class tqdmLoggingHandler(logging.Handler):
 
 
 def setup_logger(name, level, handler):
-    """
-    Used to setup a logger
-
-    Arguments:
-            name (string): The name of the logger
-            level (int): The minimum log level for logs to be displayed at
-            handler (handler): The handler to add to the logger
-    """
     logger = logging.getLogger(name)
     logger.setLevel(level)
     logger.addHandler(handler)

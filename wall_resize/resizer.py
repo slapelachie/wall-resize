@@ -5,11 +5,9 @@ import logging
 import tqdm
 import shutil
 import re
-import string
-import random
+from PIL import Image
 
 from .utils import utils, logger
-from PIL import Image
 
 # Setup the required loggers
 log = logger.setup_logger(
@@ -18,8 +16,6 @@ log = logger.setup_logger(
 tqdm_log = logger.setup_logger(
     __name__ + ".tqdm", logging.WARNING, logger.tqdmLoggingHandler()
 )
-
-FNULL = open(os.devnull, "w")
 
 
 class Resizer:
@@ -42,19 +38,19 @@ class Resizer:
         self.progress = progress
         self.images = []
 
-        self.images = get_images(self.image_path)
+        self.images = utils.get_images(self.image_path)
         if not self.images:
             log.critical("Passed file is not directory or file. Exiting...")
             exit(1)
 
         if not self.out_directory:
-            self.out_directory = get_path_file_folder(self.image_path)
+            self.out_directory = utils.get_path_file_folder(self.image_path)
 
         if verbose_logging:
             log.setLevel(logging.INFO)
             tqdm_log.setLevel(logging.INFO)
 
-    def resize_image(self):
+    def resize_images(self):
         nwidth, nheight = self.dimensions
 
         out_path = os.path.join(
@@ -69,49 +65,16 @@ class Resizer:
         ):
             image_path = utils.get_image(os.path.join(self.image_path, self.images[i]))
             image_out_path = os.path.join(out_path, os.path.basename(image_path))
-            image = None
 
+            # Check if the file already exists
             if os.path.isfile(image_out_path):
                 continue
 
-            try:
-                image = Image.open(image_path)
-            except:
-                log.error(
-                    "Cannot get image info for {}. Skipping...".format(image_path)
-                )
+            image = resize_image(image_path, (nwidth, nheight), self.use_waifu)
+            if not image:
                 continue
 
-            width, height = image.size
-
-            if (width == nwidth) and (height == nheight):
-                continue
-            elif (width < nwidth) or (height < nheight):
-                if not self.use_waifu:
-                    tqdm_log.warn(
-                        "Image {} is smaller than specified dimensions. Skipping...".format(
-                            image_path
-                        )
-                    )
-                    continue
-
-                scale_factor = max([round(nwidth / width), round(height / nheight)])
-                image = upscale_image(image_path, scale_factor)
-                width, height = image.size
-
-            rwidth, rheight = get_ratio_dimensions((width, height), (nwidth, nheight))
-
-            # Crop to the middle using the passed width and height
-            crop_box = (
-                (rwidth - nwidth) / 2,
-                (rheight - nheight) / 2,
-                (rwidth + nwidth) / 2,
-                (rheight + nheight) / 2,
-            )
-
             try:
-                image = image.resize((rwidth, rheight), Image.LANCZOS)
-                image = image.crop(crop_box)
                 image.save(image_out_path)
             except:
                 raise
@@ -139,8 +102,24 @@ def get_ratio_dimensions(dimensions, new_dimensions):
     return (rwidth, rheight)
 
 
+def get_dimensions_from_string(dimension_string):
+    # Finds images matching 0-9x-09
+    dimension_regex = r"([\d]+)(?:[xX])([\d]+)"
+    regex = re.compile(dimension_regex)
+
+    match = regex.match(str(dimension_string))
+    if match == None:
+        log.critical("Could not find valid dimensions! Exiting...")
+        sys.exit(1)
+
+    width = match.group(1)
+    height = match.group(2)
+
+    return (int(width), int(height))
+
+
 def upscale_image(image_path, scale_factor):
-    out_path = "/tmp/wall-resize-{}.png".format(get_random_string(6))
+    out_path = "/tmp/wall-resize-{}.png".format(utils.get_random_string(6))
 
     subprocess.run(
         [
@@ -168,40 +147,44 @@ def upscale_image(image_path, scale_factor):
         raise
 
 
-def get_dimensions_from_string(dimension_string):
-    # Finds images matching 0-9x-09
-    dimension_regex = r"([\d]+)(?:[xX])([\d]+)"
-    regex = re.compile(dimension_regex)
+def resize_image(image_path, new_dimensions, use_waifu):
+    new_width, new_height = new_dimensions
+    image = None
 
-    match = regex.match(str(dimension_string))
-    if match == None:
-        log.critical("Could not find valid dimensions! Exiting...")
-        sys.exit(1)
-
-    width = match.group(1)
-    height = match.group(2)
-
-    return (int(width), int(height))
-
-
-def get_images(image_path):
-    if os.path.isfile(image_path):
-        return [utils.get_image(image_path)]
-    elif os.path.isdir(image_path):
-        return utils.get_dir_imgs(image_path)
-    else:
+    try:
+        image = Image.open(image_path)
+    except:
+        log.error("Cannot get image info for {}. Skipping...".format(image_path))
         return None
 
+    width, height = image.size
 
-def get_path_file_folder(path):
-    if os.path.isfile(path):
-        return os.path.abspath(os.path.dirname(path))
-    elif os.path.isdir(path):
-        return os.path.abspath(path)
-    else:
-        return None
+    if (width == new_width) and (height == new_height):
+        return image
+    elif (width < new_width) or (height < new_height):
+        if not use_waifu:
+            tqdm_log.warn(
+                "Image {} is smaller than specified dimensions. Skipping...".format(
+                    image_path
+                )
+            )
+            return None
 
+        scale_factor = max([round(new_width / width), round(height / new_height)])
+        image = upscale_image(image_path, scale_factor)
+        width, height = image.size
 
-def get_random_string(length):
-    letters = string.ascii_lowercase
-    return "".join(random.choice(letters) for i in range(length))
+    rwidth, rheight = get_ratio_dimensions((width, height), (new_width, new_height))
+
+    # Crop to the middle using the passed width and height
+    crop_box = (
+        (rwidth - new_width) / 2,
+        (rheight - new_height) / 2,
+        (rwidth + new_width) / 2,
+        (rheight + new_height) / 2,
+    )
+
+    image = image.resize((rwidth, rheight), Image.LANCZOS)
+    image = image.crop(crop_box)
+
+    return image
