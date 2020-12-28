@@ -4,7 +4,7 @@ LONG_DESC = open("README.md").read()
 
 setup(
     name="wall-resize",
-    version="1.0.0b0",
+    version="1.0.0b1",
     description="Resizes wallpapers to desired size",
     long_description_content_type="text/markdown",
     long_description=LONG_DESC,
@@ -22,6 +22,6 @@ setup(
     license="GPLv2",
     packages=["wall_resize", "wall_resize.utils"],
     entry_points={"console_scripts": ["wall-resize=wall_resize.__main__:main"]},
-    install_requires=["tqdm"],
+    install_requires=["tqdm", "PIL"],
     zip_safe=False,
 )
