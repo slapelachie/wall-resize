@@ -1,4 +1,6 @@
 # Wallpaper Resizer
+![Run Tests](https://github.com/slapelachie/wall-resize/workflows/Run%20Tests/badge.svg)
+
 Simple batch image resizing script that implements upscaling.
 
 This project is aimed at mass converting wallpapers to a specified set of dimensions.
