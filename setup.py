@@ -22,6 +22,6 @@ setup(
     license="GPLv2",
     packages=["wall_resize", "wall_resize.utils"],
     entry_points={"console_scripts": ["wall-resize=wall_resize.__main__:main"]},
-    install_requires=["tqdm", "PIL"],
+    install_requires=["tqdm", "Pillow"],
     zip_safe=False,
 )
