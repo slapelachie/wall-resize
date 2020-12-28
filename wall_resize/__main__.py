@@ -33,6 +33,10 @@ def get_args():
         "--replace", action="store_true", help="replace the file once scaled"
     )
 
+    arg.add_argument(
+        "--progress", action="store_true", help="Display progress of resizing files"
+    )
+
     return arg
 
 
@@ -57,6 +61,7 @@ def parse_args(parser):
             replace_image=args.replace,
             use_waifu=args.w,
             verbose_logging=args.v,
+            progress=args.progress,
         )
         resizer_engine.resize_image()
     else:

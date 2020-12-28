@@ -31,6 +31,7 @@ class Resizer:
         use_waifu=False,
         replace_image=False,
         verbose_logging=False,
+        progress=False,
     ):
         self.image_path = image_path
         self.out_directory = out_directory
@@ -38,15 +39,20 @@ class Resizer:
         self.replace_image = replace_image
         self.use_waifu = use_waifu
         self.verbose_logging = verbose_logging
+        self.progress = progress
         self.images = []
 
         self.images = get_images(self.image_path)
         if not self.images:
-            print("Passed file is not directory or file. Exiting...")
+            log.critical("Passed file is not directory or file. Exiting...")
             exit(1)
 
         if not self.out_directory:
-            self.out_directory = os.path.abspath(os.path.dirname(self.image_path))
+            self.out_directory = get_path_file_folder(self.image_path)
+
+        if verbose_logging:
+            log.setLevel(logging.INFO)
+            tqdm_log.setLevel(logging.INFO)
 
     def resize_image(self):
         nwidth, nheight = self.dimensions
@@ -56,7 +62,11 @@ class Resizer:
         )
         os.makedirs(out_path, exist_ok=True)
 
-        for i in tqdm.tqdm(range(len(self.images))):
+        for i in tqdm.tqdm(
+            range(len(self.images)),
+            bar_format=logger.bar_format,
+            disable=not self.progress,
+        ):
             image_path = utils.get_image(os.path.join(self.image_path, self.images[i]))
             image_out_path = os.path.join(out_path, os.path.basename(image_path))
             image = None
@@ -67,7 +77,9 @@ class Resizer:
             try:
                 image = Image.open(image_path)
             except:
-                print("Cannot get image info for {}. Skipping...".format(image_path))
+                log.error(
+                    "Cannot get image info for {}. Skipping...".format(image_path)
+                )
                 continue
 
             width, height = image.size
@@ -76,7 +88,7 @@ class Resizer:
                 continue
             elif (width < nwidth) or (height < nheight):
                 if not self.use_waifu:
-                    print(
+                    tqdm_log.warn(
                         "Image {} is smaller than specified dimensions. Skipping...".format(
                             image_path
                         )
@@ -107,10 +119,11 @@ class Resizer:
             if self.replace_image:
                 shutil.move(image_out_path, image_path)
 
-        if self.resize_image:
+        if self.replace_image:
             try:
                 os.rmdir(out_path)
             except:
+                log.warn("{} contains files. Not removing directory".format(out_path))
                 pass
 
 
@@ -162,14 +175,8 @@ def get_dimensions_from_string(dimension_string):
 
     match = regex.match(str(dimension_string))
     if match == None:
-        # log.critical("Could not find valid dimensions! Exiting...")
+        log.critical("Could not find valid dimensions! Exiting...")
         sys.exit(1)
-    # log.debug(
-    #    'Matched regex "%s" to "%s" resulting in "%s"',
-    #    dimension_regex,
-    #    str(dimension_string),
-    #    match.group(0),
-    # )
 
     width = match.group(1)
     height = match.group(2)
@@ -182,6 +189,15 @@ def get_images(image_path):
         return [utils.get_image(image_path)]
     elif os.path.isdir(image_path):
         return utils.get_dir_imgs(image_path)
+    else:
+        return None
+
+
+def get_path_file_folder(path):
+    if os.path.isfile(path):
+        return os.path.abspath(os.path.dirname(path))
+    elif os.path.isdir(path):
+        return os.path.abspath(path)
     else:
         return None
 
