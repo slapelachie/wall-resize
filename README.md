@@ -37,8 +37,10 @@ The arguments are the following
 | -o        | The output directory |
 | -d        | The dimensions of the rescaled image. Defaults to: 1920x1080 |
 | -v        | Verbose logging |
-| -m        | Move used files once they have been scaled|
 | -w        | Use waifu2x scaling on smaller images (This process takes a long time) |
+| --replace | Replaces the inputed file once scaled |
+| --progress| Displays the progress of the scaling |
+
 
 ### Examples
 To only descale images in the `~/wallpapers/` directory to 1920x1080
@@ -48,13 +50,13 @@ wall-resize -i ~/wallpapers/
 
 To descale and upscale images to 1920x1080 in the `~/wallpapers/` directory and move them once they have done
 ```
-wall-resize -wm -i ~/wallpapers/
+wall-resize --replace -wi ~/wallpapers/
 ```
 
 To do everything in the last command, use the dimensions of 640x480 and move them to `~/scaled_wallpapers/` once done
 ```
-wall-resize -wm -d 640x480 -i ~/wallpapers/ -o ~/scaled_wallpapers/
+wall-resize -d 640x480 -wi ~/wallpapers/ -o ~/scaled_wallpapers/
 ```
 
 ## License
-Using the [GNU GPL](LICENSE) license
+Using the [GNU GPLv2](LICENSE) license
