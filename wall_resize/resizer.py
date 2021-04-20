@@ -6,6 +6,7 @@ import tqdm
 import shutil
 import re
 from PIL import Image
+from typing import Tuple, Dict, List
 
 from .utils import utils, logger
 
@@ -50,7 +51,7 @@ class Resizer:
             log.setLevel(logging.INFO)
             tqdm_log.setLevel(logging.INFO)
 
-    def resize_images(self):
+    def resize_images(self) -> None:
         nwidth, nheight = self.dimensions
 
         out_path = os.path.join(
@@ -64,7 +65,10 @@ class Resizer:
             disable=not self.progress,
         ):
             image_path = utils.get_image(os.path.join(self.image_path, self.images[i]))
-            image_out_path = os.path.join(out_path, os.path.basename(image_path))
+            image_out_path = os.path.join(
+                out_path,
+                "{}.png".format(os.path.splitext(os.path.basename(image_path))[0]),
+            )
 
             # Check if the file already exists
             if os.path.isfile(image_out_path):
@@ -80,7 +84,10 @@ class Resizer:
                 raise
 
             if self.replace_image:
-                shutil.move(image_out_path, image_path)
+                os.remove(image_path)
+                shutil.move(
+                    image_out_path, "{}.png".format(os.path.splitext(image_path)[0])
+                )
 
         if self.replace_image:
             try:
@@ -90,7 +97,9 @@ class Resizer:
                 pass
 
 
-def get_ratio_dimensions(dimensions, new_dimensions):
+def get_ratio_dimensions(
+    dimensions: Tuple[int, int], new_dimensions: Tuple[int, int]
+) -> Tuple[int, int]:
     # Gets the resize size while keeping the aspect ratio the same
     width, height = dimensions
     new_width, new_height = new_dimensions
@@ -102,12 +111,12 @@ def get_ratio_dimensions(dimensions, new_dimensions):
     return (rwidth, rheight)
 
 
-def get_dimensions_from_string(dimension_string):
+def get_dimensions_from_string(dimensions: str) -> Tuple[int, int]:
     # Finds images matching 0-9x-09
     dimension_regex = r"([\d]+)(?:[xX])([\d]+)"
     regex = re.compile(dimension_regex)
 
-    match = regex.match(str(dimension_string))
+    match = regex.match(str(dimensions))
     if match == None:
         log.critical("Could not find valid dimensions! Exiting...")
         sys.exit(1)
@@ -118,20 +127,20 @@ def get_dimensions_from_string(dimension_string):
     return (int(width), int(height))
 
 
-def upscale_image(image_path, scale_factor):
+def upscale_image(image_path: str, scale_factor: float) -> Image:
     out_path = "/tmp/wall-resize-{}.png".format(utils.get_random_string(6))
 
     subprocess.run(
         [
             "waifu2x-converter-cpp",
+            "-i",
+            image_path,
             "-m",
             "noise-scale",
             "--noise-level",
             "1",
             "--scale-ratio",
             str(scale_factor),
-            "-i",
-            image_path,
             "-o",
             out_path,
         ],
@@ -147,7 +156,9 @@ def upscale_image(image_path, scale_factor):
         raise
 
 
-def resize_image(image_path, new_dimensions, use_waifu):
+def resize_image(
+    image_path: str, new_dimensions: Tuple[int, int], use_waifu: bool
+) -> Image:
     new_width, new_height = new_dimensions
     image = None
 
@@ -160,7 +171,7 @@ def resize_image(image_path, new_dimensions, use_waifu):
     width, height = image.size
 
     if (width == new_width) and (height == new_height):
-        return image
+        return None
     elif (width < new_width) or (height < new_height):
         if not use_waifu:
             tqdm_log.warn(
@@ -170,7 +181,7 @@ def resize_image(image_path, new_dimensions, use_waifu):
             )
             return None
 
-        scale_factor = max([round(new_width / width), round(height / new_height)])
+        scale_factor = max([round(new_width / width, 2), round(new_height / height, 2)])
         image = upscale_image(image_path, scale_factor)
         width, height = image.size
 
